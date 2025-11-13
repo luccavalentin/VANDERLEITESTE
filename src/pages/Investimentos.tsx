@@ -112,7 +112,10 @@ export default function Investimentos() {
     queryFn: async () => {
       const { data, error } = await supabase.from('investimentos').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Investimento[];
+      return (data || []).map((item: any) => ({
+        ...item,
+        status: (item.status || 'ativo') as 'ativo' | 'resgatado' | 'vencido',
+      })) as Investimento[];
     },
   });
 

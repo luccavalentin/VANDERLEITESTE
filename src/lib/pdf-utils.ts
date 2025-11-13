@@ -218,7 +218,7 @@ export const gerarPDFRelatorio = async (config: {
           
           // Capturar gráfico como imagem com melhor qualidade
           const canvas = await html2canvas(elemento, {
-            backgroundColor: '#ffffff',
+            background: '#ffffff',
             logging: false,
             useCORS: true,
             allowTaint: false,
