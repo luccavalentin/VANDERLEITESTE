@@ -512,7 +512,7 @@ export default function Relatorios() {
                   <SelectContent>
                     <SelectItem value="todos">Todas as categorias</SelectItem>
                     {valoresCategoria.map(categoria => (
-                      <SelectItem key={categoria} value={categoria}>
+                      <SelectItem key={String(categoria)} value={String(categoria)}>
                         {String(categoria).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}
