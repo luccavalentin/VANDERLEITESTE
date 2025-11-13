@@ -52,7 +52,7 @@ interface Investimento {
   prazo_dias: number | null;
   data_aplicacao: string;
   data_vencimento: string | null;
-  status?: 'ativo' | 'resgatado' | 'vencido'; // Tornar opcional para compatibilidade
+  status: 'ativo' | 'resgatado' | 'vencido';
   vincular_fluxo_caixa?: boolean | null;
   observacoes: string | null;
   historico_rendimento?: HistoricoRendimento[];

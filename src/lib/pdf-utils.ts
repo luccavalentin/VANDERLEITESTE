@@ -218,11 +218,10 @@ export const gerarPDFRelatorio = async (config: {
           
           // Capturar gráfico como imagem com melhor qualidade
           const canvas = await html2canvas(elemento, {
-            background: '#ffffff',
+            backgroundColor: '#ffffff',
             logging: false,
             useCORS: true,
             allowTaint: false,
-            foreignObjectRendering: true,
             onclone: (clonedDoc: Document, element: HTMLElement | null) => {
               // Garantir que os SVGs sejam visíveis no clone
               try {

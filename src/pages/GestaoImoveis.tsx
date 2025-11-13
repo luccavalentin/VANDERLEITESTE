@@ -357,7 +357,7 @@ function AlugadosTab() {
                   <Input id="valor_aluguel" type="number" step="0.01" value={formData.valor_aluguel} onChange={(e) => setFormData({ ...formData, valor_aluguel: e.target.value })} />
                 </div>
                 <ClienteAutocomplete
-                  value={formData.inquilino_id || undefined}
+                  value={formData.inquilino_id || null}
                   onChange={(value) => setFormData({ ...formData, inquilino_id: value || null })}
                   label="Locatário"
                   placeholder="Digite o nome do cliente..."
@@ -688,8 +688,8 @@ function GestaoTab() {
       inscricao_municipal: imovel.inscricao_municipal || "",
       valor_venal: imovel.valor_venal ? String(imovel.valor_venal) : "",
       documentacao_status: imovel.documentacao_status || (imovel.documento_pago ? 'ok' : 'pendente') || "",
-      conta_agua: imovel.conta_agua || "",
-      conta_energia: imovel.conta_energia || "",
+      conta_agua: (imovel.conta_agua || "") as "" | "inquilino" | "proprio",
+      conta_energia: (imovel.conta_energia || "") as "" | "inquilino" | "proprio",
       contas_aberto_inquilino: imovel.contas_aberto_inquilino ? String(imovel.contas_aberto_inquilino) : "",
     });
     setOpen(true);

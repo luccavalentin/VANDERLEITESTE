@@ -465,8 +465,8 @@ export default function Relatorios() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos os status</SelectItem>
-                    {valoresStatus.map(status => (
-                      <SelectItem key={String(status)} value={String(status)}>
+                    {valoresStatus.map((status, index) => (
+                      <SelectItem key={`status-${index}`} value={String(status)}>
                         {String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}
@@ -488,8 +488,8 @@ export default function Relatorios() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos os tipos</SelectItem>
-                    {valoresTipo.map(tipo => (
-                      <SelectItem key={String(tipo)} value={String(tipo)}>
+                    {valoresTipo.map((tipo, index) => (
+                      <SelectItem key={`tipo-${index}`} value={String(tipo)}>
                         {String(tipo).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}
@@ -511,8 +511,8 @@ export default function Relatorios() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todas as categorias</SelectItem>
-                    {valoresCategoria.map(categoria => (
-                      <SelectItem key={String(categoria)} value={String(categoria)}>
+                    {valoresCategoria.map((categoria, index) => (
+                      <SelectItem key={`categoria-${index}`} value={String(categoria)}>
                         {String(categoria).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}

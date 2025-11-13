@@ -93,7 +93,7 @@ export default function ImoveisLocacao() {
         `)
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []) as ContratoLocacao[];
+      return (data || []) as unknown as ContratoLocacao[];
     },
   });
 
@@ -148,7 +148,7 @@ export default function ImoveisLocacao() {
             valor: data.valor_aluguel,
             data: format(dataVencimento, 'yyyy-MM-dd'),
             status: 'previsto',
-            contrato_locacao_id: (contrato as any).id,
+            contrato_locacao_id: (contrato as any)?.id || "",
           };
         });
 
