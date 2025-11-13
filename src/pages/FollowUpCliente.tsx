@@ -60,12 +60,12 @@ export default function FollowUpCliente() {
   const { data: followUps, isLoading } = useQuery({
     queryKey: ['followups'],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('followups')
+      // followups não está no types.ts, usar 'as any'
+      const { data, error } = await (supabase.from as any)('followups')
         .select('*, clientes(nome)')
         .order('data_hora', { ascending: false });
       if (error) throw error;
-      return data as FollowUp[];
+      return (data || []) as FollowUp[];
     },
     staleTime: 2 * 60 * 1000,
   });
@@ -81,7 +81,7 @@ export default function FollowUpCliente() {
 
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { data: followUp, error } = await supabase.from('followups').insert(data).select().single();
+      const { data: followUp, error } = await (supabase.from as any)('followups').insert(data).select().single();
       if (error) throw error;
       return { followUp, data };
     },
@@ -102,7 +102,7 @@ export default function FollowUpCliente() {
         };
         const { data: tarefa, error: tarefaError } = await supabase.from('tarefas').insert(tarefaData).select().single();
         if (!tarefaError && tarefa && result.followUp) {
-          await supabase.from('followups').update({ tarefa_id: tarefa.id }).eq('id', result.followUp.id);
+          await (supabase.from as any)('followups').update({ tarefa_id: tarefa.id }).eq('id', result.followUp.id);
           queryClient.invalidateQueries({ queryKey: ['followups'] });
           queryClient.invalidateQueries({ queryKey: ['tarefas'] });
           notify.success("Tarefa criada automaticamente!");
@@ -119,7 +119,7 @@ export default function FollowUpCliente() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: any) => {
-      const { error } = await supabase.from('followups').update(data).eq('id', id);
+      const { error } = await (supabase.from as any)('followups').update(data).eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -135,7 +135,7 @@ export default function FollowUpCliente() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from('followups').delete().eq('id', id);
+      const { error } = await (supabase.from as any)('followups').delete().eq('id', id);
       if (error) throw error;
     },
     onSuccess: () => {

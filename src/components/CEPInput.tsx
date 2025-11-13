@@ -40,6 +40,7 @@ export function CEPInput({
     onChange(cep);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleBuscarCEP = async () => {
     const cepLimpo = value.replace(/\D/g, '');
     

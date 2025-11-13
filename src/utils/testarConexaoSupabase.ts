@@ -11,6 +11,7 @@ export async function testarConexaoSupabase() {
   try {
     // Teste 1: Verificar se consegue conectar
     console.log("1️⃣ Testando conexão básica...");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data: healthCheck, error: healthError } = await supabase
       .from("tarefas")
       .select("count")
@@ -53,7 +54,7 @@ export async function testarConexaoSupabase() {
 
     for (const tabela of tabelasEsperadas) {
       try {
-        const { error } = await supabase.from(tabela).select("count").limit(1);
+        const { error } = await (supabase.from as any)(tabela).select("count").limit(1);
         if (!error) {
           tabelasEncontradas.push(tabela);
           console.log(`  ✅ ${tabela}`);
@@ -69,6 +70,7 @@ export async function testarConexaoSupabase() {
 
     // Teste 3: Verificar RLS (Row Level Security)
     console.log("3️⃣ Verificando políticas RLS...");
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { data: rlsTest, error: rlsError } = await supabase
       .from("tarefas")
       .select("*")

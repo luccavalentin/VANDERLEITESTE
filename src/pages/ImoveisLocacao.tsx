@@ -85,7 +85,7 @@ export default function ImoveisLocacao() {
     queryKey: ['contratos-locacao'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('contratos_locacao')
+        .from('contratos_locacao' as any)
         .select(`
           *,
           imoveis:imovel_id(endereco, cidade, estado),
@@ -124,7 +124,7 @@ export default function ImoveisLocacao() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       const { data: contrato, error } = await supabase
-        .from('contratos_locacao')
+        .from('contratos_locacao' as any)
         .insert(data)
         .select()
         .single();
@@ -172,7 +172,7 @@ export default function ImoveisLocacao() {
   const updateMutation = useMutation({
     mutationFn: async ({ id, ...data }: any) => {
       const { error } = await supabase
-        .from('contratos_locacao')
+        .from('contratos_locacao' as any)
         .update(data)
         .eq('id', id);
       if (error) throw error;
@@ -191,7 +191,7 @@ export default function ImoveisLocacao() {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase
-        .from('contratos_locacao')
+        .from('contratos_locacao' as any)
         .delete()
         .eq('id', id);
       if (error) throw error;

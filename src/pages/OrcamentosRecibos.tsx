@@ -84,7 +84,7 @@ export default function OrcamentosRecibos() {
         .select('*, clientes(nome)')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Documento[];
+      return (data || []) as unknown as Documento[];
     },
     staleTime: 2 * 60 * 1000, // Cache por 2 minutos
   });

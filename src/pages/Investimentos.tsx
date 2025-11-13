@@ -14,7 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { Plus, Edit, Trash2, LineChart, Search, Download, TrendingUp } from "lucide-react";
+import { Plus, Edit, Trash2, LineChart, Search, Download } from "lucide-react";
 import { InstituicaoFinanceiraAutocomplete } from "@/components/InstituicaoFinanceiraAutocomplete";
 import { format, differenceInDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -52,7 +52,7 @@ interface Investimento {
   prazo_dias: number | null;
   data_aplicacao: string;
   data_vencimento: string | null;
-  status: 'ativo' | 'resgatado' | 'vencido';
+  status?: 'ativo' | 'resgatado' | 'vencido'; // Tornar opcional para compatibilidade
   vincular_fluxo_caixa?: boolean | null;
   observacoes: string | null;
   historico_rendimento?: HistoricoRendimento[];
@@ -319,6 +319,7 @@ export default function Investimentos() {
 
   // Cores para gráficos de pizza
   const COLORS_TIPO = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const COLORS_STATUS = ['#10b981', '#3b82f6', '#6b7280'];
 
   return (
@@ -538,7 +539,7 @@ export default function Investimentos() {
                       dataKey="value"
                       animationDuration={1000}
                     >
-                      {dadosPorTipo.map((entry, index) => (
+                      {dadosPorTipo.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS_TIPO[index % COLORS_TIPO.length]} />
                       ))}
                     </Pie>
@@ -673,6 +674,7 @@ export default function Investimentos() {
             ) : investimentosFiltrados && investimentosFiltrados.length > 0 ? (
               investimentosFiltrados.map((investimento) => {
                 const rentabilidade = calcularRentabilidade(investimento);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const valorResgate = calcularValorResgate(investimento);
                 return (
                   <TableRow key={investimento.id} className="cursor-pointer hover:bg-muted/50" onClick={() => handleAbrirDetalhes(investimento)}>

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { Plus, Edit, Trash2, StickyNote, Download, FileSpreadsheet, CheckSquare } from "lucide-react";
+import { Plus, Edit, Trash2, Download, FileSpreadsheet, CheckSquare } from "lucide-react";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
 import { gerarExcelRelatorio } from "@/lib/excel-utils";
 import { format, addDays } from "date-fns";

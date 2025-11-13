@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,21 +15,17 @@ import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { ClienteAutocomplete } from "@/components/ClienteAutocomplete";
 import { CEPInput } from "@/components/CEPInput";
-import { Plus, Edit, Trash2, Home, Search, Copy, Calendar, FileText, Download, TrendingUp, DollarSign, Building2 } from "lucide-react";
+import { Plus, Edit, Trash2, Home, Search, Copy, Calendar, Download, TrendingUp, DollarSign, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
 import { useTheme } from "next-themes";
 import {
-  AreaChart,
-  Area,
   BarChart,
   Bar,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -154,11 +149,11 @@ function AlugadosTab() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('imoveis')
-        .select('*, clientes(nome, telefone, email)')
+        .select('*')
         .in('status', ['alugado', 'disponivel'])
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Imovel[];
+      return (data || []) as Imovel[];
     },
   });
 
@@ -362,7 +357,7 @@ function AlugadosTab() {
                   <Input id="valor_aluguel" type="number" step="0.01" value={formData.valor_aluguel} onChange={(e) => setFormData({ ...formData, valor_aluguel: e.target.value })} />
                 </div>
                 <ClienteAutocomplete
-                  value={formData.inquilino_id || null}
+                  value={formData.inquilino_id || undefined}
                   onChange={(value) => setFormData({ ...formData, inquilino_id: value || null })}
                   label="Locatário"
                   placeholder="Digite o nome do cliente..."
@@ -949,7 +944,7 @@ function GestaoTab() {
                       dataKey="value"
                       animationDuration={1000}
                     >
-                      {dadosPorStatus.map((entry, index) => (
+                      {dadosPorStatus.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS_STATUS[index % COLORS_STATUS.length]} />
                       ))}
                     </Pie>

@@ -37,7 +37,7 @@ export function ClienteAutocomplete({
   required = false,
   placeholder = "Digite o nome do cliente...",
   showNovoButton = true,
-  onNovoCliente,
+  onNovoCliente: onNovoCliente,
 }: ClienteAutocompleteProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -123,6 +123,7 @@ export function ClienteAutocomplete({
     inputRef.current?.focus();
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const handleNovoCliente = () => {
     setIsNovoClienteOpen(true);
   };

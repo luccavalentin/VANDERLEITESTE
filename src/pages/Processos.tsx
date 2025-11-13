@@ -46,6 +46,7 @@ export default function Processos() {
   const [editingProcesso, setEditingProcesso] = useState<Processo | null>(null);
   const [busca, setBusca] = useState("");
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { data: clientes, isLoading: loadingClientes } = useQuery({
     queryKey: ['clientes'],
     queryFn: async () => {

@@ -49,6 +49,7 @@ interface Frete {
 }
 
 export default function Transportadora() {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("caminhoes");
 

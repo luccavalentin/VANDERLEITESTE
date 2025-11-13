@@ -154,8 +154,10 @@ export default function Financiamentos() {
     setEditingFinanciamento(null);
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const calcularCET = (financiamento: Financiamento): number => {
     // Cálculo simplificado do CET (Custo Efetivo Total)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const taxaMensal = financiamento.taxa_juros / 12 / 100;
     const valorTotalPago = financiamento.valor_parcela * financiamento.numero_parcelas;
     const custoTotal = valorTotalPago - financiamento.valor_total + (financiamento.iof || 0) + (financiamento.seguro || 0);

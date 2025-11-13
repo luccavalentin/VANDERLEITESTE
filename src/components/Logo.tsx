@@ -1,4 +1,4 @@
-import { Scale, BarChart3 } from "lucide-react"
+import { Scale } from "lucide-react"
 
 interface LogoProps {
   variant?: "full" | "icon"

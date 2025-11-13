@@ -161,7 +161,7 @@ export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
             <span className="flex-1 text-left">{item.label}</span>
             {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
           </Button>
-          {isExpanded && (
+          {isExpanded && item.children && (
             <div className="space-y-1 animate-fade-in">
               {item.children.map((child) => {
                 const childIsActive = currentPage === child.id

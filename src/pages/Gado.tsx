@@ -99,7 +99,7 @@ export default function Gado() {
     queryFn: async () => {
       const { data, error } = await supabase.from('gado').select('*').order('created_at', { ascending: false });
       if (error) throw error;
-      return data as Gado[];
+      return (data || []) as unknown as Gado[];
     },
   });
 
@@ -148,7 +148,7 @@ export default function Gado() {
       const eventos = [...(animal.eventos || []), evento];
       const { error } = await supabase
         .from('gado')
-        .update({ eventos })
+        .update({ eventos: eventos as unknown as Json })
         .eq('id', id);
       if (error) throw error;
     },
@@ -167,7 +167,7 @@ export default function Gado() {
       const historico = [...(animal.historico_peso || []), { data, peso }];
       const { error } = await supabase
         .from('gado')
-        .update({ historico_peso: historico, peso_atual: peso })
+        .update({ historico_peso: historico as unknown as Json, peso_atual: peso })
         .eq('id', id);
       if (error) throw error;
     },

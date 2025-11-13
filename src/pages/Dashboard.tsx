@@ -13,7 +13,6 @@ import {
   Users, 
   Scale, 
   DollarSign, 
-  AlertCircle, 
   TrendingUp, 
   TrendingDown,
   CheckSquare,
@@ -372,6 +371,7 @@ export default function Dashboard() {
     },
   ], [mesComparativo1, mesComparativo2, dadosComparativo1, dadosComparativo2]);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dadosGraficoPizza = [
     { name: 'Entradas Mês 1', value: dadosComparativo1.entradas },
     { name: 'Saídas Mês 1', value: dadosComparativo1.saidas },
@@ -443,6 +443,7 @@ export default function Dashboard() {
     return acc;
   }, {}) || {};
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const dadosStatusTarefas = Object.entries(statusTarefas).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1).replace('_', ' '),
     value,
@@ -815,7 +816,7 @@ export default function Dashboard() {
                       dataKey="value"
                       animationDuration={800}
                     >
-                      {dadosPizzaEntradas.map((entry, index) => (
+                      {dadosPizzaEntradas.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -869,7 +870,7 @@ export default function Dashboard() {
                       dataKey="value"
                       animationDuration={800}
                     >
-                      {dadosPizzaSaidas.map((entry, index) => (
+                      {dadosPizzaSaidas.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -921,7 +922,7 @@ export default function Dashboard() {
                       dataKey="value"
                       animationDuration={800}
                     >
-                      {dadosStatusProcessos.map((entry, index) => (
+                      {dadosStatusProcessos.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>

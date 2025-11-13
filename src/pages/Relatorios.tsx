@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { Download, FileSpreadsheet, Filter, Search, Calendar } from "lucide-react";
+import { Download, FileSpreadsheet, Filter, Search } from "lucide-react";
 import { format, parse, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
@@ -76,8 +76,8 @@ export default function Relatorios() {
   const { data: dadosEntidade, isLoading } = useQuery({
     queryKey: ['relatorios', filtros.entidade],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from(filtros.entidade)
+      // Usar 'as any' para entidades que não estão no types.ts (followups, contratos_locacao)
+      const { data, error } = await (supabase.from as any)(filtros.entidade)
         .select('*')
         .order('created_at', { ascending: false });
       

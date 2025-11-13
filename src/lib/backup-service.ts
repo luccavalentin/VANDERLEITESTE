@@ -44,6 +44,7 @@ const BACKUP_FILENAME = 'BACKUP_SISTEMA_VANDERLEI.xlsx';
 
 // Chave para armazenar data do último backup
 const LAST_BACKUP_KEY = 'last_backup_date';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BACKUP_INTERVAL_DAYS = 1; // 1 dia (24 horas)
 
 /**
@@ -263,7 +264,7 @@ export async function gerarBackupExcel(): Promise<boolean> {
     await removerBackupAntigo();
     
     // Faz upload para o Supabase Storage
-    const { data, error: uploadError } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from(BACKUP_BUCKET)
       .upload(BACKUP_FILENAME, excelBuffer, {
         contentType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',

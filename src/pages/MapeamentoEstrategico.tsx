@@ -396,7 +396,7 @@ export default function MapeamentoEstrategico() {
               <SelectContent>
                 <SelectItem value="todos">Todos</SelectItem>
                 {advogadosUnicos.map(adv => (
-                  <SelectItem key={adv} value={adv}>{adv}</SelectItem>
+                  <SelectItem key={adv} value={adv || ''}>{adv}</SelectItem>
                 ))}
               </SelectContent>
             </Select>

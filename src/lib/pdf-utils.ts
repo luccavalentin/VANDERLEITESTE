@@ -218,18 +218,17 @@ export const gerarPDFRelatorio = async (config: {
           
           // Capturar gráfico como imagem com melhor qualidade
           const canvas = await html2canvas(elemento, {
-            backgroundColor: '#ffffff',
-            scale: 2,
+            background: '#ffffff',
             logging: false,
             useCORS: true,
             allowTaint: false,
             foreignObjectRendering: true,
-            onclone: (clonedDoc, element) => {
+            onclone: (clonedDoc: Document, element: HTMLElement | null) => {
               // Garantir que os SVGs sejam visíveis no clone
               try {
                 // Forçar renderização de SVGs
                 const svgs = clonedDoc.querySelectorAll('svg');
-                svgs.forEach(svg => {
+                svgs.forEach((svg: Element) => {
                   const svgEl = svg as HTMLElement;
                   svgEl.style.visibility = 'visible';
                   svgEl.style.display = 'block';
@@ -249,7 +248,7 @@ export const gerarPDFRelatorio = async (config: {
                 
                 // Garantir que os elementos filhos também sejam visíveis
                 const allElements = clonedDoc.querySelectorAll('*');
-                allElements.forEach(el => {
+                allElements.forEach((el: Element) => {
                   const htmlEl = el as HTMLElement;
                   if (htmlEl.style) {
                     if (htmlEl.style.visibility === 'hidden') {

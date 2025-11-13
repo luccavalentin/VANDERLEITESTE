@@ -9,7 +9,7 @@ import { gerarExcelRelatorio } from "@/lib/excel-utils";
 import { format, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTheme } from "next-themes";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -18,8 +18,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -137,13 +135,13 @@ export default function DashboardCaixa() {
     .slice(0, 5);
 
   // Dados para gráfico de pizza de categorias de entrada
-  const dadosPizzaEntradas = topCategoriasEntrada.map((cat, index) => ({
+  const dadosPizzaEntradas = topCategoriasEntrada.map((cat) => ({
     name: cat.nome,
     value: cat.valor,
   }));
 
   // Dados para gráfico de pizza de categorias de saída
-  const dadosPizzaSaidas = topCategoriasSaida.map((cat, index) => ({
+  const dadosPizzaSaidas = topCategoriasSaida.map((cat) => ({
     name: cat.nome,
     value: cat.valor,
   }));
@@ -458,7 +456,7 @@ export default function DashboardCaixa() {
                       dataKey="value"
                       animationDuration={1000}
                     >
-                      {dadosPizzaEntradas.map((entry, index) => (
+                      {dadosPizzaEntradas.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS_ENTRADAS[index % COLORS_ENTRADAS.length]} />
                       ))}
                     </Pie>
@@ -507,7 +505,7 @@ export default function DashboardCaixa() {
                       dataKey="value"
                       animationDuration={1000}
                     >
-                      {dadosPizzaSaidas.map((entry, index) => (
+                      {dadosPizzaSaidas.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS_SAIDAS[index % COLORS_SAIDAS.length]} />
                       ))}
                     </Pie>

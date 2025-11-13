@@ -12,10 +12,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { PlanilhaFinanceira } from "@/components/PlanilhaFinanceira";
-import { Plus, Edit, Trash2, TrendingUp, DollarSign, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Edit, Trash2, DollarSign, Download, FileSpreadsheet } from "lucide-react";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
 import { gerarExcelRelatorio } from "@/lib/excel-utils";
-import { format, startOfMonth, endOfMonth, subMonths, eachDayOfInterval, startOfWeek, endOfWeek } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useTheme } from "next-themes";
 import {
@@ -26,8 +26,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -507,7 +505,7 @@ export default function EntradaCaixa() {
                       dataKey="value"
                       animationDuration={1000}
                     >
-                      {dadosCategorias.map((entry, index) => (
+                      {dadosCategorias.map((_entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
