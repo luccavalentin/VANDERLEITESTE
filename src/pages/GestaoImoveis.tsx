@@ -123,7 +123,7 @@ function AlugadosTab() {
     alugado: boolean;
     conta_agua: string;
     conta_energia: string;
-    inquilino_id: string;
+    inquilino_id: string | null;
     data_inicio_aluguel: string;
     data_fim_aluguel: string;
     tornar_receita: boolean;
