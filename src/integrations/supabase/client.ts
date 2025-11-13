@@ -16,24 +16,12 @@ const usandoVariaveisAmbiente = !!(
   import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-if (!usandoVariaveisAmbiente) {
-  if (import.meta.env.DEV) {
-    console.warn(
-      "⚠️ Supabase: Usando credenciais de produção como fallback.",
-      "Para usar credenciais diferentes, crie um arquivo .env.local com:",
-      "\n  VITE_SUPABASE_URL=sua_url_aqui",
-      "\n  VITE_SUPABASE_ANON_KEY=sua_chave_aqui"
-    );
-  }
-  
-  if (import.meta.env.PROD) {
-    console.info(
-      "ℹ️ Supabase: Usando credenciais de produção configuradas no código.",
-      "Para usar variáveis de ambiente, configure no Vercel:",
-      "\n  VITE_SUPABASE_URL",
-      "\n  VITE_SUPABASE_ANON_KEY"
-    );
-  }
+// Sempre usar as credenciais configuradas (variáveis de ambiente ou fallback)
+if (import.meta.env.PROD) {
+  console.info(
+    "✅ Supabase conectado:",
+    usandoVariaveisAmbiente ? "Variáveis de ambiente" : "Credenciais de produção (fallback)"
+  );
 }
 
 // Criar cliente Supabase

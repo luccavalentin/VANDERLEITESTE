@@ -1,6 +1,7 @@
 # 🚨 URGENTE: Dados Vazios - Solução Rápida
 
 ## ⚠️ PROBLEMA
+
 O deploy em produção está usando código antigo que tenta conectar ao `placeholder.supabase.co`.
 
 ## ✅ SOLUÇÃO IMEDIATA
@@ -12,6 +13,7 @@ O código já foi corrigido e está pronto. As credenciais do Supabase estão co
 ### Passo 2: Fazer Novo Deploy no Vercel
 
 **OPÇÃO A - Se você tem GitHub conectado:**
+
 1. Faça push do código atualizado:
    ```bash
    git push origin main
@@ -19,6 +21,7 @@ O código já foi corrigido e está pronto. As credenciais do Supabase estão co
 2. O Vercel fará deploy automaticamente
 
 **OPÇÃO B - Se NÃO tem GitHub conectado:**
+
 1. Acesse https://vercel.com
 2. Vá em seu projeto **VANDERLEITESTE**
 3. Vá em **Deployments**
@@ -31,10 +34,12 @@ O código já foi corrigido e está pronto. As credenciais do Supabase estão co
 **IMPORTANTE:** Após o novo deploy, limpe o cache:
 
 1. **Hard Refresh:**
+
    - Pressione `Ctrl + Shift + R` (ou `Ctrl + F5`)
    - Isso força o navegador a baixar a versão nova
 
 2. **Ou limpe o cache:**
+
    - `Ctrl + Shift + Delete`
    - Selecione "Imagens e arquivos em cache"
    - Clique em "Limpar dados"
@@ -47,6 +52,7 @@ O código já foi corrigido e está pronto. As credenciais do Supabase estão co
 
 1. Abra o Console (F12)
 2. Procure por:
+
    - ✅ `ℹ️ Supabase: Usando credenciais de produção` = CORRETO
    - ❌ `placeholder.supabase.co` = AINDA USANDO VERSÃO ANTIGA
 
@@ -65,6 +71,7 @@ Se os dados não aparecem, verifique se eles existem no Supabase:
    - etc.
 
 **Se as tabelas estão vazias:**
+
 - Os dados podem ter sido perdidos
 - Você precisará recadastrar ou executar o script de dados fake novamente
 
@@ -83,4 +90,3 @@ Se os dados não aparecem, verifique se eles existem no Supabase:
 2. Verifique se o commit `dc4d927` está no deploy
 3. Verifique se há erros de CORS no console
 4. Verifique as políticas RLS no Supabase
-
