@@ -10,10 +10,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
-import { Plus, Edit, Trash2, StickyNote, Download, FileSpreadsheet } from "lucide-react";
+import { Plus, Edit, Trash2, StickyNote, Download, FileSpreadsheet, CheckSquare } from "lucide-react";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
 import { gerarExcelRelatorio } from "@/lib/excel-utils";
-import { format } from "date-fns";
+import { format, addDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface Anotacao {
@@ -27,6 +27,8 @@ interface Anotacao {
 export default function Anotacoes() {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  const [openDialogTarefa, setOpenDialogTarefa] = useState(false);
+  const [anotacaoParaTarefa, setAnotacaoParaTarefa] = useState<Anotacao | null>(null);
   const [editingAnotacao, setEditingAnotacao] = useState<Anotacao | null>(null);
   const [busca, setBusca] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todos");
@@ -101,6 +103,52 @@ export default function Anotacoes() {
     },
   });
 
+  const transformarEmTarefaMutation = useMutation({
+    mutationFn: async (anotacao: Anotacao) => {
+      // Calcular data de vencimento: usar a data da anotação ou adicionar 7 dias a partir de hoje
+      let dataVencimento: string;
+      if (anotacao.data) {
+        dataVencimento = anotacao.data;
+      } else {
+        dataVencimento = format(addDays(new Date(), 7), 'yyyy-MM-dd');
+      }
+
+      // Criar tarefa a partir da anotação
+      const tarefaData = {
+        titulo: anotacao.titulo,
+        descricao: anotacao.conteudo,
+        data_vencimento: dataVencimento,
+        prioridade: 'media' as const,
+        status: 'pendente' as const,
+        observacoes: `Transformada da anotação: ${anotacao.categoria}`,
+      };
+
+      const { error } = await supabase.from('tarefas').insert(tarefaData);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['tarefas'] });
+      toast.success("Anotação transformada em tarefa com sucesso!");
+    },
+    onError: (error: any) => {
+      console.error('Erro ao transformar em tarefa:', error);
+      toast.error("Erro ao transformar anotação em tarefa");
+    },
+  });
+
+  const handleTransformarEmTarefa = (anotacao: Anotacao) => {
+    setAnotacaoParaTarefa(anotacao);
+    setOpenDialogTarefa(true);
+  };
+
+  const confirmarTransformarEmTarefa = () => {
+    if (anotacaoParaTarefa) {
+      transformarEmTarefaMutation.mutate(anotacaoParaTarefa);
+      setOpenDialogTarefa(false);
+      setAnotacaoParaTarefa(null);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       titulo: "",
@@ -154,10 +202,10 @@ export default function Anotacoes() {
 
   const handleExportarPDF = () => {
     const dadosFormatados = (anotacoesFiltradas || []).map(anotacao => ({
-      titulo: anotacao.titulo,
-      categoria: anotacao.categoria,
-      conteudo: anotacao.conteudo.substring(0, 100) + (anotacao.conteudo.length > 100 ? '...' : ''),
-      data: anotacao.data ? format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR }) : '-',
+      'Título': anotacao.titulo,
+      'Categoria': anotacao.categoria,
+      'Conteúdo': anotacao.conteudo.substring(0, 100) + (anotacao.conteudo.length > 100 ? '...' : ''),
+      'Data': anotacao.data ? format(new Date(anotacao.data), 'dd/MM/yyyy', { locale: ptBR }) : '-',
     }));
 
     gerarPDFRelatorio({
@@ -267,6 +315,43 @@ export default function Anotacoes() {
         </div>
       </div>
 
+      {/* Dialog de Confirmação para Transformar em Tarefa */}
+      <Dialog open={openDialogTarefa} onOpenChange={setOpenDialogTarefa}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Transformar Anotação em Tarefa</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Deseja transformar a anotação <strong>"{anotacaoParaTarefa?.titulo}"</strong> em uma tarefa?
+            </p>
+            <div className="bg-muted/50 p-4 rounded-lg space-y-2 text-sm">
+              <p><strong>Título da tarefa:</strong> {anotacaoParaTarefa?.titulo}</p>
+              <p><strong>Descrição:</strong> {anotacaoParaTarefa?.conteudo.substring(0, 100)}{anotacaoParaTarefa && anotacaoParaTarefa.conteudo.length > 100 ? '...' : ''}</p>
+              <p><strong>Data de vencimento:</strong> {
+                anotacaoParaTarefa?.data 
+                  ? format(new Date(anotacaoParaTarefa.data), 'dd/MM/yyyy', { locale: ptBR })
+                  : format(addDays(new Date(), 7), 'dd/MM/yyyy', { locale: ptBR }) + ' (7 dias a partir de hoje)'
+              }</p>
+              <p><strong>Prioridade:</strong> Média</p>
+              <p><strong>Status:</strong> Pendente</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setOpenDialogTarefa(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={confirmarTransformarEmTarefa}
+              disabled={transformarEmTarefaMutation.isPending}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {transformarEmTarefaMutation.isPending ? 'Criando...' : 'Transformar em Tarefa'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex gap-4">
         <Input
           placeholder="Buscar anotações..."
@@ -298,10 +383,31 @@ export default function Anotacoes() {
                   <div className="flex items-center justify-between">
                     <h3 className="font-semibold text-lg">{anotacao.titulo}</h3>
                     <div className="flex gap-2">
-                      <Button size="icon" variant="ghost" onClick={() => handleEdit(anotacao)}>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => handleTransformarEmTarefa(anotacao)}
+                        title="Transformar em tarefa"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950"
+                        disabled={transformarEmTarefaMutation.isPending}
+                      >
+                        <CheckSquare className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => handleEdit(anotacao)}
+                        title="Editar anotação"
+                      >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(anotacao.id)}>
+                      <Button 
+                        size="icon" 
+                        variant="ghost" 
+                        onClick={() => deleteMutation.mutate(anotacao.id)}
+                        title="Excluir anotação"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>

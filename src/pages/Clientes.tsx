@@ -71,13 +71,18 @@ export default function Clientes() {
     status: "ativo",
   })
 
-  const { data: clientes, isLoading } = useQuery({
+  const { data: clientes, isLoading, error: queryError } = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
       const { data, error } = await supabase.from("clientes").select("*").order("nome", { ascending: true })
-      if (error) throw error
+      if (error) {
+        console.error("Erro ao buscar clientes:", error)
+        throw error
+      }
+      console.log("Clientes carregados:", data?.length || 0)
       return data as Cliente[]
     },
+    retry: 1,
   })
 
   const createMutation = useMutation({
@@ -202,14 +207,14 @@ export default function Clientes() {
 
   const handleExportarPDF = () => {
     const dadosFormatados = (clientesFiltrados || []).map(cliente => ({
-      nome: cliente.nome,
-      tipo: cliente.tipo === 'pf' ? 'Pessoa Física' : 'Pessoa Jurídica',
-      cpf_cnpj: cliente.cpf_cnpj || '-',
-      telefone: cliente.telefone,
-      email: cliente.email || '-',
-      cidade: cliente.cidade,
-      estado: cliente.estado,
-      status: cliente.status === 'ativo' ? 'Ativo' : 'Inativo',
+      'Nome': cliente.nome,
+      'Tipo': cliente.tipo === 'pf' ? 'Pessoa Física' : 'Pessoa Jurídica',
+      'CPF/CNPJ': cliente.cpf_cnpj || '-',
+      'Telefone': cliente.telefone,
+      'Email': cliente.email || '-',
+      'Cidade': cliente.cidade,
+      'Estado': cliente.estado,
+      'Status': cliente.status === 'ativo' ? 'Ativo' : 'Inativo',
     }));
 
     gerarPDFRelatorio({
@@ -460,6 +465,22 @@ export default function Clientes() {
               <TableRow>
                 <TableCell colSpan={7} className="text-center">
                   Carregando...
+                </TableCell>
+              </TableRow>
+            ) : queryError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-red-500">
+                  <div className="space-y-2">
+                    <p>Erro ao carregar clientes</p>
+                    <p className="text-sm text-muted-foreground">
+                      {queryError instanceof Error ? queryError.message : "Erro desconhecido"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Verifique o console do navegador (F12) para mais detalhes.
+                      <br />
+                      Possível causa: Políticas RLS não configuradas. Execute o script VERIFICAR_RLS_POLICIES.sql no Supabase.
+                    </p>
+                  </div>
                 </TableCell>
               </TableRow>
             ) : clientesFiltrados && clientesFiltrados.length > 0 ? (

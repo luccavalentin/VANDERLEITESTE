@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,8 +15,26 @@ import { PlanilhaFinanceira } from "@/components/PlanilhaFinanceira";
 import { Plus, Edit, Trash2, TrendingDown, DollarSign, Download, FileSpreadsheet } from "lucide-react";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
 import { gerarExcelRelatorio } from "@/lib/excel-utils";
-import { format } from "date-fns";
+import { format, startOfMonth, endOfMonth, subMonths, startOfWeek, endOfWeek } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useTheme } from "next-themes";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Transacao {
   id: string;
@@ -30,12 +48,26 @@ interface Transacao {
 }
 
 export default function SaidaCaixa() {
+  const { theme } = useTheme();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [openPlanilha, setOpenPlanilha] = useState(false);
   const [editingTransacao, setEditingTransacao] = useState<Transacao | null>(null);
   const [busca, setBusca] = useState("");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todos");
+
+  // Cores dos gráficos adaptáveis ao tema
+  const chartColors = useMemo(() => {
+    const isDark = theme === 'dark';
+    return {
+      primary: '#ef4444',
+      grid: isDark ? '#374151' : '#e5e7eb',
+      axis: isDark ? '#9ca3af' : '#6b7280',
+      text: isDark ? '#f3f4f6' : '#111827',
+      tooltipBg: isDark ? '#1f2937' : '#ffffff',
+      tooltipBorder: isDark ? '#374151' : '#e5e7eb',
+    };
+  }, [theme]);
 
   const [formData, setFormData] = useState<{
     descricao: string;
@@ -169,6 +201,72 @@ export default function SaidaCaixa() {
 
   const totalSaidas = transacoesFiltradas?.reduce((acc, t) => acc + Number(t.valor), 0) || 0;
   const categorias = Array.from(new Set(transacoes?.map(t => t.categoria) || []));
+
+  // Dados para gráfico de evolução mensal (últimos 6 meses)
+  const dadosEvolucaoMensal = useMemo(() => {
+    const meses = Array.from({ length: 6 }, (_, i) => {
+      const mes = subMonths(new Date(), 5 - i);
+      const inicio = startOfMonth(mes);
+      const fim = endOfMonth(mes);
+      
+      const saidasMes = transacoes?.filter((t) => {
+        if (t.tipo !== 'saida') return false;
+        const dataTransacao = new Date(t.data);
+        return dataTransacao >= inicio && dataTransacao <= fim;
+      }) || [];
+      
+      const total = saidasMes.reduce((acc, t) => acc + Number(t.valor), 0);
+      
+      return {
+        mes: format(mes, 'MMM', { locale: ptBR }),
+        valor: total,
+      };
+    });
+    
+    return meses;
+  }, [transacoes]);
+
+  // Dados para gráfico de categorias (pizza)
+  const dadosCategorias = useMemo(() => {
+    const categoriasMap = transacoes?.reduce((acc: Record<string, number>, t) => {
+      if (t.tipo !== 'saida') return acc;
+      const key = t.categoria || 'Sem categoria';
+      acc[key] = (acc[key] || 0) + Number(t.valor);
+      return acc;
+    }, {}) || {};
+    
+    return Object.entries(categoriasMap)
+      .map(([name, value]) => ({ name, value: value as number }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [transacoes]);
+
+  // Dados para gráfico semanal (últimas 4 semanas)
+  const dadosSemanais = useMemo(() => {
+    const hoje = new Date();
+    const semanas = Array.from({ length: 4 }, (_, i) => {
+      const semanaInicio = startOfWeek(subMonths(hoje, i === 0 ? 0 : Math.floor(i / 4)), { weekStartsOn: 1 });
+      const semanaFim = endOfWeek(semanaInicio, { weekStartsOn: 1 });
+      
+      const saidasSemana = transacoes?.filter((t) => {
+        if (t.tipo !== 'saida') return false;
+        const dataTransacao = new Date(t.data);
+        return dataTransacao >= semanaInicio && dataTransacao <= semanaFim;
+      }) || [];
+      
+      const total = saidasSemana.reduce((acc, t) => acc + Number(t.valor), 0);
+      
+      return {
+        semana: `Sem ${format(semanaInicio, 'dd/MM', { locale: ptBR })}`,
+        valor: total,
+      };
+    }).reverse();
+    
+    return semanas;
+  }, [transacoes]);
+
+  // Cores para gráfico de pizza
+  const COLORS = ['#ef4444', '#f87171', '#fca5a5', '#fecaca', '#fee2e2'];
 
   const handleExportarPDF = () => {
     const dadosFormatados = (transacoesFiltradas || []).map(transacao => ({
@@ -325,6 +423,169 @@ export default function SaidaCaixa() {
           </div>
         </div>
       </Card>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Gráfico de Evolução Mensal */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Evolução Mensal - Últimos 6 Meses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosEvolucaoMensal.length > 0 && dadosEvolucaoMensal.some(d => d.valor > 0) ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dadosEvolucaoMensal} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorSaidas" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartColors.primary} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={chartColors.primary} stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                    <XAxis 
+                      dataKey="mes" 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <YAxis 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                      }).format(value)}
+                      labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="valor" 
+                      stroke={chartColors.primary} 
+                      fillOpacity={1} 
+                      fill="url(#colorSaidas)" 
+                      name="Saídas"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhuma saída registrada</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Categorias */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição por Categoria</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosCategorias.length > 0 ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dadosCategorias}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      animationDuration={1000}
+                    >
+                      {dadosCategorias.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                      }).format(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px', color: chartColors.text }}
+                      iconType="circle"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhuma categoria encontrada</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfico Semanal */}
+      {dadosSemanais.length > 0 && dadosSemanais.some(d => d.valor > 0) && (
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Evolução Semanal - Últimas 4 Semanas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosSemanais} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                  <XAxis 
+                    dataKey="semana" 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartColors.tooltipBg,
+                      border: `1px solid ${chartColors.tooltipBorder}`,
+                      borderRadius: '8px',
+                      padding: '10px',
+                    }}
+                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL' 
+                    }).format(value)}
+                    labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                  />
+                  <Bar 
+                    dataKey="valor" 
+                    fill={chartColors.primary} 
+                    name="Saídas"
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
         <Input

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,27 @@ import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { Plus, Edit, Trash2, LineChart, Search, Download, TrendingUp } from "lucide-react";
 import { InstituicaoFinanceiraAutocomplete } from "@/components/InstituicaoFinanceiraAutocomplete";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
-import { LineChart as RechartsLineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { useTheme } from "next-themes";
+import { 
+  LineChart as RechartsLineChart, 
+  Line, 
+  XAxis, 
+  YAxis, 
+  CartesianGrid, 
+  Tooltip, 
+  Legend, 
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
 
 interface HistoricoRendimento {
   data: string;
@@ -42,6 +59,7 @@ interface Investimento {
 }
 
 export default function Investimentos() {
+  const { theme } = useTheme();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [openDetalhes, setOpenDetalhes] = useState(false);
@@ -50,6 +68,20 @@ export default function Investimentos() {
   const [busca, setBusca] = useState("");
   const [filtroTipo, setFiltroTipo] = useState<string>("todos");
   const [filtroStatus, setFiltroStatus] = useState<string>("todos");
+
+  // Cores dos gráficos adaptáveis ao tema
+  const chartColors = useMemo(() => {
+    const isDark = theme === 'dark';
+    return {
+      primary: '#10b981',
+      secondary: '#3b82f6',
+      grid: isDark ? '#374151' : '#e5e7eb',
+      axis: isDark ? '#9ca3af' : '#6b7280',
+      text: isDark ? '#f3f4f6' : '#111827',
+      tooltipBg: isDark ? '#1f2937' : '#ffffff',
+      tooltipBorder: isDark ? '#374151' : '#e5e7eb',
+    };
+  }, [theme]);
 
   const [formData, setFormData] = useState<{
     tipo: string;
@@ -234,6 +266,61 @@ export default function Investimentos() {
 
   const tipos = Array.from(new Set(investimentos?.map(i => i.tipo) || []));
 
+  // Dados para gráfico de evolução de investimentos (últimos 6 meses)
+  const dadosEvolucaoInvestimentos = useMemo(() => {
+    const meses = Array.from({ length: 6 }, (_, i) => {
+      const mes = subMonths(new Date(), 5 - i);
+      const inicio = startOfMonth(mes);
+      const fim = endOfMonth(mes);
+      
+      const investimentosMes = investimentos?.filter((i) => {
+        const dataAplicacao = new Date(i.data_aplicacao);
+        return dataAplicacao >= inicio && dataAplicacao <= fim;
+      }) || [];
+      
+      const totalAplicado = investimentosMes.reduce((acc, i) => acc + Number(i.valor_aplicado), 0);
+      const totalRentabilidade = investimentosMes.reduce((acc, i) => acc + calcularRentabilidade(i), 0);
+      
+      return {
+        mes: format(mes, 'MMM', { locale: ptBR }),
+        aplicado: totalAplicado,
+        rentabilidade: totalRentabilidade,
+        total: totalAplicado + totalRentabilidade,
+      };
+    });
+    
+    return meses;
+  }, [investimentos]);
+
+  // Dados para gráfico de pizza por tipo
+  const dadosPorTipo = useMemo(() => {
+    const tiposMap = investimentos?.reduce((acc: Record<string, number>, i) => {
+      const key = i.tipo || 'Outro';
+      acc[key] = (acc[key] || 0) + Number(i.valor_aplicado);
+      return acc;
+    }, {}) || {};
+    
+    return Object.entries(tiposMap)
+      .map(([name, value]) => ({ name, value: value as number }))
+      .sort((a, b) => b.value - a.value);
+  }, [investimentos]);
+
+  // Dados para gráfico de pizza por status
+  const dadosPorStatus = useMemo(() => {
+    const statusMap = investimentos?.reduce((acc: Record<string, number>, i) => {
+      const key = i.status || 'ativo';
+      acc[key] = (acc[key] || 0) + Number(i.valor_aplicado);
+      return acc;
+    }, {}) || {};
+    
+    return Object.entries(statusMap)
+      .map(([name, value]) => ({ name, value: value as number }));
+  }, [investimentos]);
+
+  // Cores para gráficos de pizza
+  const COLORS_TIPO = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+  const COLORS_STATUS = ['#10b981', '#3b82f6', '#6b7280'];
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex justify-between items-center">
@@ -350,6 +437,185 @@ export default function Investimentos() {
           <h3 className="text-2xl font-bold text-yellow-500">{investimentosVencendo}</h3>
         </Card>
       </div>
+
+      {/* Gráficos de Investimentos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Gráfico de Evolução */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Evolução de Investimentos - Últimos 6 Meses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosEvolucaoInvestimentos.length > 0 && dadosEvolucaoInvestimentos.some(d => d.aplicado > 0) ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={dadosEvolucaoInvestimentos} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorAplicado" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartColors.secondary} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={chartColors.secondary} stopOpacity={0.1}/>
+                      </linearGradient>
+                      <linearGradient id="colorRentabilidade" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={chartColors.primary} stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor={chartColors.primary} stopOpacity={0.1}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                    <XAxis 
+                      dataKey="mes" 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <YAxis 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                      }).format(value)}
+                      labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px', color: chartColors.text }}
+                      iconType="circle"
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="aplicado" 
+                      stroke={chartColors.secondary} 
+                      fillOpacity={1} 
+                      fill="url(#colorAplicado)" 
+                      name="Valor Aplicado"
+                      strokeWidth={2}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="rentabilidade" 
+                      stroke={chartColors.primary} 
+                      fillOpacity={1} 
+                      fill="url(#colorRentabilidade)" 
+                      name="Rentabilidade"
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhum investimento registrado</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Distribuição por Tipo */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição por Tipo</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosPorTipo.length > 0 ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dadosPorTipo}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      animationDuration={1000}
+                    >
+                      {dadosPorTipo.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS_TIPO[index % COLORS_TIPO.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                        style: 'currency', 
+                        currency: 'BRL' 
+                      }).format(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px', color: chartColors.text }}
+                      iconType="circle"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhum tipo encontrado</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfico de Status */}
+      {dadosPorStatus.length > 0 && (
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição por Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosPorStatus} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartColors.tooltipBg,
+                      border: `1px solid ${chartColors.tooltipBorder}`,
+                      borderRadius: '8px',
+                      padding: '10px',
+                    }}
+                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL' 
+                    }).format(value)}
+                    labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill={chartColors.primary}
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="flex gap-4">
         <div className="relative flex-1">

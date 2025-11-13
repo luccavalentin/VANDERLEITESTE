@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,28 @@ import { toast } from "sonner";
 import { BotaoVoltar } from "@/components/BotaoVoltar";
 import { ClienteAutocomplete } from "@/components/ClienteAutocomplete";
 import { CEPInput } from "@/components/CEPInput";
-import { Plus, Edit, Trash2, Home, Search, Copy, Calendar, FileText, Download } from "lucide-react";
+import { Plus, Edit, Trash2, Home, Search, Copy, Calendar, FileText, Download, TrendingUp, DollarSign, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { gerarPDFRelatorio } from "@/lib/pdf-utils";
+import { useTheme } from "next-themes";
+import {
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
 
 interface Imovel {
   id: string;
@@ -725,8 +743,387 @@ function GestaoTab() {
     i.matricula?.toLowerCase().includes(busca.toLowerCase())
   );
 
+  const { theme } = useTheme();
+
+  // Cores dos gráficos adaptáveis ao tema
+  const chartColors = useMemo(() => {
+    const isDark = theme === 'dark';
+    return {
+      primary: '#3b82f6',
+      secondary: '#10b981',
+      warning: '#f59e0b',
+      danger: '#ef4444',
+      grid: isDark ? '#374151' : '#e5e7eb',
+      axis: isDark ? '#9ca3af' : '#6b7280',
+      text: isDark ? '#f3f4f6' : '#111827',
+      tooltipBg: isDark ? '#1f2937' : '#ffffff',
+      tooltipBorder: isDark ? '#374151' : '#e5e7eb',
+    };
+  }, [theme]);
+
+  // Métricas calculadas
+  const metricas = useMemo(() => {
+    if (!imoveis) return {
+      total: 0,
+      alugados: 0,
+      disponiveis: 0,
+      vendidos: 0,
+      manutencao: 0,
+      totalValor: 0,
+      mediaValor: 0,
+      totalAluguel: 0,
+      mediaAluguel: 0,
+      totalValorVenal: 0,
+    };
+
+    const total = imoveis.length;
+    const alugados = imoveis.filter(i => i.status === 'alugado').length;
+    const disponiveis = imoveis.filter(i => i.status === 'disponivel').length;
+    const vendidos = imoveis.filter(i => i.status === 'vendido').length;
+    const manutencao = imoveis.filter(i => i.status === 'manutencao').length;
+    
+    const totalValor = imoveis.reduce((acc, i) => acc + Number(i.valor || 0), 0);
+    const mediaValor = total > 0 ? totalValor / total : 0;
+    
+    const imoveisAlugados = imoveis.filter(i => i.status === 'alugado' && i.valor_aluguel);
+    const totalAluguel = imoveisAlugados.reduce((acc, i) => acc + Number(i.valor_aluguel || 0), 0);
+    const mediaAluguel = imoveisAlugados.length > 0 ? totalAluguel / imoveisAlugados.length : 0;
+    
+    const imoveisComValorVenal = imoveis.filter(i => i.valor_venal);
+    const totalValorVenal = imoveisComValorVenal.reduce((acc, i) => acc + Number(i.valor_venal || 0), 0);
+
+    return {
+      total,
+      alugados,
+      disponiveis,
+      vendidos,
+      manutencao,
+      totalValor,
+      mediaValor,
+      totalAluguel,
+      mediaAluguel,
+      totalValorVenal,
+    };
+  }, [imoveis]);
+
+  // Dados para gráfico de distribuição por status
+  const dadosPorStatus = useMemo(() => {
+    if (!imoveis) return [];
+    const statusMap = imoveis.reduce((acc: Record<string, number>, i) => {
+      const key = i.status || 'disponivel';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(statusMap).map(([name, value]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value: value as number,
+    }));
+  }, [imoveis]);
+
+  // Dados para gráfico de distribuição por cidade
+  const dadosPorCidade = useMemo(() => {
+    if (!imoveis) return [];
+    const cidadeMap = imoveis.reduce((acc: Record<string, number>, i) => {
+      const key = i.cidade || 'Sem cidade';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    
+    return Object.entries(cidadeMap)
+      .map(([name, value]) => ({ name, value: value as number }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 5);
+  }, [imoveis]);
+
+  // Dados para gráfico de valores de aluguel
+  const dadosValoresAluguel = useMemo(() => {
+    if (!imoveis) return [];
+    const imoveisAlugados = imoveis.filter(i => i.status === 'alugado' && i.valor_aluguel);
+    
+    return imoveisAlugados.map(i => ({
+      endereco: `${i.endereco.substring(0, 20)}...`,
+      valor: Number(i.valor_aluguel || 0),
+    })).sort((a, b) => b.valor - a.valor).slice(0, 10);
+  }, [imoveis]);
+
+  // Dados para gráfico de valores totais por status
+  const dadosValoresPorStatus = useMemo(() => {
+    if (!imoveis) return [];
+    const statusMap = imoveis.reduce((acc: Record<string, number>, i) => {
+      const key = i.status || 'disponivel';
+      acc[key] = (acc[key] || 0) + Number(i.valor || 0);
+      return acc;
+    }, {});
+    
+    return Object.entries(statusMap).map(([name, value]) => ({
+      name: name.charAt(0).toUpperCase() + name.slice(1),
+      value: value as number,
+    }));
+  }, [imoveis]);
+
+  // Cores para gráficos de pizza
+  const COLORS_STATUS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+  const COLORS_CIDADE = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#ec4899'];
+
   return (
     <div className="space-y-4">
+      {/* Cards de Métricas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card className="p-6 hover:shadow-primary/20 hover:border-primary/50 group">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Total de Imóveis</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <Building2 className="h-5 w-5 text-primary" />
+              <span className="text-3xl font-bold">{metricas.total}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6 hover:shadow-green-500/20 hover:border-green-500/50 group">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Imóveis Alugados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-green-500" />
+              <span className="text-3xl font-bold text-green-500">{metricas.alugados}</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-2">
+              {metricas.total > 0 ? ((metricas.alugados / metricas.total) * 100).toFixed(1) : 0}% do total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6 hover:shadow-blue-500/20 hover:border-blue-500/50 group">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Média de Valor</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-blue-500" />
+              <span className="text-3xl font-bold text-blue-500">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metricas.mediaValor)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6 hover:shadow-yellow-500/20 hover:border-yellow-500/50 group">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Média de Aluguel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-yellow-500" />
+              <span className="text-3xl font-bold text-yellow-500">
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(metricas.mediaAluguel)}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Gráfico de Distribuição por Status */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Distribuição por Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosPorStatus.length > 0 ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={dadosPorStatus}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      fill="#8884d8"
+                      dataKey="value"
+                      animationDuration={1000}
+                    >
+                      {dadosPorStatus.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS_STATUS[index % COLORS_STATUS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => `${value} imóveis`}
+                    />
+                    <Legend 
+                      wrapperStyle={{ paddingTop: '20px', color: chartColors.text }}
+                      iconType="circle"
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhum dado disponível</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Distribuição por Cidade */}
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Top 5 Cidades</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {dadosPorCidade.length > 0 ? (
+              <div className="w-full h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dadosPorCidade} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <YAxis 
+                      stroke={chartColors.axis}
+                      tick={{ fill: chartColors.axis }}
+                      style={{ fontSize: '11px' }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: chartColors.tooltipBg,
+                        border: `1px solid ${chartColors.tooltipBorder}`,
+                        borderRadius: '8px',
+                        padding: '10px',
+                      }}
+                      formatter={(value: number) => `${value} imóveis`}
+                      labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                    />
+                    <Bar 
+                      dataKey="value" 
+                      fill={chartColors.primary}
+                      radius={[8, 8, 0, 0]}
+                      animationDuration={1000}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">Nenhum dado disponível</p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráfico de Valores de Aluguel */}
+      {dadosValoresAluguel.length > 0 && (
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Top 10 Valores de Aluguel</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[300px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosValoresAluguel} margin={{ top: 20, right: 30, left: 20, bottom: 60 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                  <XAxis 
+                    dataKey="endereco" 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    style={{ fontSize: '10px' }}
+                  />
+                  <YAxis 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartColors.tooltipBg,
+                      border: `1px solid ${chartColors.tooltipBorder}`,
+                      borderRadius: '8px',
+                      padding: '10px',
+                    }}
+                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL' 
+                    }).format(value)}
+                    labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                  />
+                  <Bar 
+                    dataKey="valor" 
+                    fill={chartColors.secondary}
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Gráfico de Valores Totais por Status */}
+      {dadosValoresPorStatus.length > 0 && (
+        <Card className="p-4 sm:p-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Valor Total por Status</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="w-full h-[250px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={dadosValoresPorStatus} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={chartColors.grid} opacity={0.2} />
+                  <XAxis 
+                    dataKey="name" 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <YAxis 
+                    stroke={chartColors.axis}
+                    tick={{ fill: chartColors.axis }}
+                    tickFormatter={(value) => `R$ ${(value / 1000).toFixed(0)}k`}
+                    style={{ fontSize: '11px' }}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: chartColors.tooltipBg,
+                      border: `1px solid ${chartColors.tooltipBorder}`,
+                      borderRadius: '8px',
+                      padding: '10px',
+                    }}
+                    formatter={(value: number) => new Intl.NumberFormat('pt-BR', { 
+                      style: 'currency', 
+                      currency: 'BRL' 
+                    }).format(value)}
+                    labelStyle={{ color: chartColors.text, fontWeight: 'bold' }}
+                  />
+                  <Bar 
+                    dataKey="value" 
+                    fill={chartColors.primary}
+                    radius={[8, 8, 0, 0]}
+                    animationDuration={1000}
+                  />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <div className="flex justify-between items-center">
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -899,10 +1296,10 @@ function GestaoTab() {
 
       <Card>
         <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Endereço</TableHead>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Endereço</TableHead>
                 <TableHead>Cidade</TableHead>
                 <TableHead>Vigência</TableHead>
                 <TableHead>Reajuste Locação</TableHead>
@@ -912,15 +1309,15 @@ function GestaoTab() {
                 <TableHead>Titularidade Água</TableHead>
                 <TableHead>Titularidade Energia</TableHead>
                 <TableHead>Contas em Aberto</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {isLoading ? (
-                <TableRow>
+              <TableHead className="text-right">Ações</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow>
                   <TableCell colSpan={11} className="text-center">Carregando...</TableCell>
-                </TableRow>
-              ) : imoveisFiltrados && imoveisFiltrados.length > 0 ? (
+              </TableRow>
+            ) : imoveisFiltrados && imoveisFiltrados.length > 0 ? (
                 imoveisFiltrados.map((imovel) => {
                   const vigenciaInicio = imovel.vigencia_inicio || imovel.data_inicio_aluguel;
                   const vigenciaFim = imovel.vigencia_fim || imovel.data_fim_aluguel;
@@ -939,24 +1336,24 @@ function GestaoTab() {
                   const documentacaoStatus = imovel.documentacao_status || (imovel.documento_pago ? 'ok' : 'pendente');
                   
                   return (
-                    <TableRow key={imovel.id}>
-                      <TableCell className="font-medium">
-                        {imovel.endereco}, {imovel.numero}
-                      </TableCell>
+                <TableRow key={imovel.id}>
+                  <TableCell className="font-medium">
+                    {imovel.endereco}, {imovel.numero}
+                  </TableCell>
                       <TableCell>{imovel.cidade}</TableCell>
                       <TableCell>{vigenciaTexto}</TableCell>
                       <TableCell>{reajusteTexto}</TableCell>
                       <TableCell>{imovel.inscricao_municipal || "-"}</TableCell>
-                      <TableCell>
+                  <TableCell>
                         {imovel.valor_venal 
                           ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(imovel.valor_venal))
                           : "-"}
-                      </TableCell>
-                      <TableCell>
+                  </TableCell>
+                  <TableCell>
                         <Badge className={documentacaoStatus === 'ok' ? 'bg-green-500' : 'bg-red-500'}>
                           {documentacaoStatus === 'ok' ? 'OK' : 'PENDENTE'}
-                        </Badge>
-                      </TableCell>
+                    </Badge>
+                  </TableCell>
                       <TableCell>{imovel.conta_agua ? imovel.conta_agua.toUpperCase() : "-"}</TableCell>
                       <TableCell>{imovel.conta_energia ? imovel.conta_energia.toUpperCase() : "-"}</TableCell>
                       <TableCell>
@@ -964,32 +1361,32 @@ function GestaoTab() {
                           ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(imovel.contas_aberto_inquilino))
                           : "R$ 0,00"}
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button size="icon" variant="ghost" onClick={() => handleEdit(imovel)}>
-                            <Edit className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleDuplicarPagamento(imovel)}>
-                            <Copy className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => handleAgendarPagamento(imovel, new Date().toISOString().split('T')[0], Number(imovel.valor))}>
-                            <Calendar className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(imovel.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button size="icon" variant="ghost" onClick={() => handleEdit(imovel)}>
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleDuplicarPagamento(imovel)}>
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => handleAgendarPagamento(imovel, new Date().toISOString().split('T')[0], Number(imovel.valor))}>
+                        <Calendar className="h-4 w-4" />
+                      </Button>
+                      <Button size="icon" variant="ghost" onClick={() => deleteMutation.mutate(imovel.id)}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
                   );
                 })
-              ) : (
-                <TableRow>
+            ) : (
+              <TableRow>
                   <TableCell colSpan={11} className="text-center">Nenhum imóvel encontrado</TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
         </div>
       </Card>
     </div>

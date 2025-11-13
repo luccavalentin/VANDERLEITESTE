@@ -169,12 +169,12 @@ export default function Tarefas() {
 
   const handleExportarPDF = () => {
     const dadosFormatados = (tarefasFiltradas || []).map(tarefa => ({
-      titulo: tarefa.titulo,
-      descricao: tarefa.descricao || '-',
-      data_vencimento: format(new Date(tarefa.data_vencimento), 'dd/MM/yyyy', { locale: ptBR }),
-      prioridade: tarefa.prioridade === 'alta' ? 'Alta' : tarefa.prioridade === 'media' ? 'Média' : 'Baixa',
-      status: tarefa.status === 'pendente' ? 'Pendente' : tarefa.status === 'em_andamento' ? 'Em Andamento' : tarefa.status === 'concluida' ? 'Concluída' : 'Cancelada',
-      responsavel: tarefa.responsavel || '-',
+      'Título': tarefa.titulo,
+      'Descrição': tarefa.descricao || '-',
+      'Data Vencimento': format(new Date(tarefa.data_vencimento), 'dd/MM/yyyy', { locale: ptBR }),
+      'Prioridade': tarefa.prioridade === 'alta' ? 'Alta' : tarefa.prioridade === 'media' ? 'Média' : 'Baixa',
+      'Status': tarefa.status === 'pendente' ? 'Pendente' : tarefa.status === 'em_andamento' ? 'Em Andamento' : tarefa.status === 'concluida' ? 'Concluída' : 'Cancelada',
+      'Responsável': tarefa.responsavel || '-',
     }));
 
     gerarPDFRelatorio({

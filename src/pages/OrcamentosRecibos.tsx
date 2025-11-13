@@ -139,7 +139,7 @@ export default function OrcamentosRecibos() {
     mutationFn: async (id: string) => {
       const { error } = await supabase
         .from('orcamentos_recibos')
-        .update({ tipo: 'recibo', status: 'pago' })
+        .update({ tipo: 'recibo', status: 'aprovado' })
         .eq('id', id);
       if (error) throw error;
     },
@@ -148,8 +148,9 @@ export default function OrcamentosRecibos() {
       toast.success("Orçamento convertido em recibo!");
       setOpenDetalhes(false);
     },
-    onError: () => {
-      toast.error("Erro ao converter documento");
+    onError: (error: any) => {
+      console.error('Erro ao converter documento:', error);
+      toast.error(`Erro ao converter documento: ${error.message || 'Erro desconhecido'}`);
     },
   });
 
@@ -466,7 +467,7 @@ export default function OrcamentosRecibos() {
                     <SelectContent>
                       <SelectItem value="pendente">Pendente</SelectItem>
                       <SelectItem value="aprovado">Aprovado</SelectItem>
-                      <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="convertido">Convertido</SelectItem>
                       <SelectItem value="recusado">Recusado</SelectItem>
                     </SelectContent>
                   </Select>
@@ -573,7 +574,7 @@ export default function OrcamentosRecibos() {
                   </TableCell>
                   <TableCell>
                     <Badge className={
-                      doc.status === 'pago' ? 'bg-green-500' :
+                      doc.status === 'convertido' ? 'bg-green-500' :
                       doc.status === 'aprovado' ? 'bg-blue-500' :
                       doc.status === 'recusado' ? 'bg-red-500' :
                       'bg-yellow-500'
@@ -633,7 +634,7 @@ export default function OrcamentosRecibos() {
                 <div>
                   <Label>Status</Label>
                   <Badge className={
-                    documentoSelecionado.status === 'pago' ? 'bg-green-500' :
+                    documentoSelecionado.status === 'convertido' ? 'bg-green-500' :
                     documentoSelecionado.status === 'aprovado' ? 'bg-blue-500' :
                     documentoSelecionado.status === 'recusado' ? 'bg-red-500' :
                     'bg-yellow-500'
@@ -688,7 +689,7 @@ export default function OrcamentosRecibos() {
                   <Edit className="h-4 w-4 mr-2" />
                   Editar
                 </Button>
-                {documentoSelecionado.tipo === 'orcamento' && documentoSelecionado.status !== 'pago' && (
+                {documentoSelecionado.tipo === 'orcamento' && documentoSelecionado.status !== 'convertido' && (
                   <Button variant="outline" onClick={() => converterEmReciboMutation.mutate(documentoSelecionado.id)}>
                     <FileCheck className="h-4 w-4 mr-2" />
                     Converter em Recibo

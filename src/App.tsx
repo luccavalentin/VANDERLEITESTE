@@ -7,7 +7,6 @@ import { ThemeProvider } from "next-themes";
 import { Sidebar } from "@/components/Layout/Sidebar";
 import { Header } from "@/components/Layout/Header";
 import { TarefasAlerta } from "@/components/TarefasAlerta";
-import { verificarNecessidadeBackup, gerarBackupExcel } from "@/lib/backup-service";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -42,7 +41,6 @@ const Investimentos = lazy(() => import("./pages/Investimentos"));
 const Relatorios = lazy(() => import("./pages/Relatorios"));
 const Anotacoes = lazy(() => import("./pages/Anotacoes"));
 const TesteConexao = lazy(() => import("./pages/TesteConexao"));
-const Backup = lazy(() => import("./pages/Backup"));
 
 const App = () => {
   const [currentPage, setCurrentPage] = useState("dashboard");
@@ -57,21 +55,6 @@ const App = () => {
     return () => {
       window.removeEventListener('navigate', handleNavigate as EventListener);
     };
-  }, []);
-
-  // Verifica necessidade de backup automático ao carregar
-  useEffect(() => {
-    const verificarBackup = async () => {
-      // Aguarda um pouco para não interferir no carregamento inicial
-      setTimeout(async () => {
-        if (verificarNecessidadeBackup()) {
-          console.log('Backup automático necessário. Gerando backup...');
-          await gerarBackupExcel();
-        }
-      }, 3000); // Aguarda 3 segundos após carregar
-    };
-
-    verificarBackup();
   }, []);
 
   const getPageTitle = () => {
@@ -96,7 +79,6 @@ const App = () => {
       relatorios: "Relatórios",
       anotacoes: "Bloco de Anotações",
       "teste-conexao": "Teste de Conexão",
-      backup: "Backup do Sistema",
     };
     return titles[currentPage] || "Gerenciador Empresarial";
   };
@@ -143,8 +125,6 @@ const App = () => {
         return <Anotacoes />;
       case "teste-conexao":
         return <TesteConexao />;
-      case "backup":
-        return <Backup />;
       default:
         return <Dashboard />;
     }
@@ -166,13 +146,13 @@ const App = () => {
               isOpen={sidebarOpen}
               onClose={() => setSidebarOpen(false)}
             />
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden relative">
               <Header
                 title={getPageTitle()}
                 onMenuClick={() => setSidebarOpen(true)}
               />
+              <TarefasAlerta />
               <main className="flex-1 overflow-y-auto bg-background p-2 sm:p-4 md:p-6 relative">
-                <TarefasAlerta />
                 <Suspense
                   fallback={
                     <div className="flex items-center justify-center h-full">

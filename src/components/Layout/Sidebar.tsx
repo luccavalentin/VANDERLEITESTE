@@ -21,17 +21,12 @@ import {
   ChevronDown,
   ChevronRight,
   Building2,
-  Database,
-  Cloud,
-  Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { useState, useEffect } from "react"
 import { Logo } from "@/components/Logo"
-import { gerarBackupManual } from "@/lib/backup-service"
-import { toast } from "sonner"
 
 interface SidebarProps {
   currentPage: string
@@ -49,8 +44,8 @@ interface MenuItem {
 
 const menuItems: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { id: "anotacoes", label: "Bloco de Anotações", icon: StickyNote },
   { id: "tarefas", label: "Gestão de Tarefas", icon: CheckSquare },
+  { id: "anotacoes", label: "Bloco de Anotações", icon: StickyNote },
   {
     id: "escritorio",
     label: "Escritório",
@@ -128,18 +123,6 @@ export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
   }
 
   const [expandedItems, setExpandedItems] = useState<string[]>(getInitialExpandedItems())
-  const [gerandoBackup, setGerandoBackup] = useState(false)
-
-  const handleBackupRapido = async () => {
-    setGerandoBackup(true)
-    try {
-      await gerarBackupManual()
-    } catch (error) {
-      console.error("Erro ao gerar backup:", error)
-    } finally {
-      setGerandoBackup(false)
-    }
-  }
 
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]))
@@ -242,28 +225,6 @@ export const Sidebar = ({ currentPage, onNavigate, isOpen, onClose }: SidebarPro
         <ScrollArea className="flex-1 p-4">
           <nav className="space-y-2">{menuItems.map((item) => renderMenuItem(item))}</nav>
         </ScrollArea>
-        <div className="p-2 border-t border-sidebar-border">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="w-full justify-center gap-2 h-8 text-xs"
-            onClick={handleBackupRapido}
-            disabled={gerandoBackup}
-            title="Gerar backup rápido"
-          >
-            {gerandoBackup ? (
-              <>
-                <Loader2 className="h-3 w-3 animate-spin" />
-                <span>Backup...</span>
-              </>
-            ) : (
-              <>
-                <Cloud className="h-3 w-3" />
-                <span>Backup</span>
-              </>
-            )}
-          </Button>
-        </div>
       </div>
     </>
   )

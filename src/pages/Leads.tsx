@@ -173,7 +173,7 @@ export default function Leads() {
       (lead.contato && lead.contato.toLowerCase().includes(searchLower)) ||
       (lead.origem && lead.origem.toLowerCase().includes(searchLower)) ||
       (lead.tarefa && lead.tarefa.toLowerCase().includes(searchLower))
-    );
+  );
   });
 
   const handleExportarPDF = () => {
@@ -227,10 +227,10 @@ export default function Leads() {
           </div>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={handleExportarPDF}>
-            <Download className="h-4 w-4 mr-2" />
-            Exportar PDF
-          </Button>
+        <Button variant="outline" onClick={handleExportarPDF}>
+          <Download className="h-4 w-4 mr-2" />
+          Exportar PDF
+        </Button>
           <Button variant="outline" onClick={handleExportarExcel}>
             <FileSpreadsheet className="h-4 w-4 mr-2" />
             Baixar Excel
@@ -457,38 +457,38 @@ export default function Leads() {
                           {lead.tarefa || '-'}
                         </TableCell>
                         <TableCell>
-                          <Badge className={statusColors[lead.status as keyof typeof statusColors]}>
-                            {lead.status}
-                          </Badge>
+                <Badge className={statusColors[lead.status as keyof typeof statusColors]}>
+                  {lead.status}
+                </Badge>
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button
-                              size="sm"
+                <Button
+                  size="sm"
                               variant="ghost"
-                              onClick={() => {
-                                setEditingLead(lead);
-                                setIsDialogOpen(true);
-                              }}
-                            >
+                  onClick={() => {
+                    setEditingLead(lead);
+                    setIsDialogOpen(true);
+                  }}
+                >
                               <Edit className="h-4 w-4" />
-                            </Button>
-                            {lead.status !== "convertido" && (
-                              <Button
-                                size="sm"
+                </Button>
+                {lead.status !== "convertido" && (
+                  <Button
+                    size="sm"
                                 variant="ghost"
-                                onClick={() => convertToClient(lead)}
-                              >
+                    onClick={() => convertToClient(lead)}
+                  >
                                 <UserPlus className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
+                  </Button>
+                )}
+                <Button
+                  size="sm"
                               variant="ghost"
-                              onClick={() => deleteMutation.mutate(lead.id)}
-                            >
+                  onClick={() => deleteMutation.mutate(lead.id)}
+                >
                               <Trash2 className="h-4 w-4 text-destructive" />
-                            </Button>
+                </Button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -497,8 +497,8 @@ export default function Leads() {
                 )}
               </TableBody>
             </Table>
-          </div>
-        </Card>
+              </div>
+            </Card>
       )}
     </div>
   );

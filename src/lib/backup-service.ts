@@ -135,7 +135,11 @@ async function garantirBucketExiste(): Promise<boolean> {
       
       if (createError) {
         console.error('Erro ao criar bucket. Você precisa criar manualmente no Supabase:', createError);
-        toast.error('Bucket de backup não encontrado. Crie o bucket "backups-sistema" no Supabase Storage.');
+        toast.error(
+          'Bucket de backup não encontrado. Crie o bucket "backups-sistema" no Supabase Storage. ' +
+          'Veja o arquivo CRIAR_BUCKET_BACKUP_SUPABASE.sql ou GUIA_CRIAR_BUCKET_BACKUP.md para instruções detalhadas.',
+          { duration: 10000 }
+        );
         return false;
       }
     }

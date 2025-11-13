@@ -1,11 +1,10 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { AlertCircle, X } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { isToday, isTomorrow, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -72,54 +71,31 @@ export function TarefasAlerta() {
 
   if (!isVisible || tarefasUrgentes.length === 0) return null;
 
-  const prioridadeAlta = tarefasOrdenadas[0]?.prioridade === 'alta';
-  const prioridadeMedia = tarefasOrdenadas[0]?.prioridade === 'media';
+  // Card compacto e discreto no topo direito - estilo similar à imagem
+  const cardClasses = 'fixed top-14 right-4 z-[100] px-3 py-2.5 border border-orange-500/40 bg-background/98 backdrop-blur-sm cursor-pointer hover:border-orange-500/60 hover:shadow-lg transition-all duration-200 shadow-sm rounded-lg max-w-[260px]';
   
-  const cardClasses = prioridadeAlta 
-    ? 'fixed top-20 right-4 z-50 p-4 border-2 border-red-500/50 bg-red-500/10 animate-pulse cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg'
-    : prioridadeMedia
-    ? 'fixed top-20 right-4 z-50 p-4 border-2 border-orange-500/50 bg-orange-500/10 animate-pulse cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg'
-    : 'fixed top-20 right-4 z-50 p-4 border-2 border-yellow-500/50 bg-yellow-500/10 animate-pulse cursor-pointer hover:scale-105 transition-all duration-200 shadow-lg';
-
-  const iconClasses = prioridadeAlta
-    ? 'h-6 w-6 text-red-500'
-    : prioridadeMedia
-    ? 'h-6 w-6 text-orange-500'
-    : 'h-6 w-6 text-yellow-500';
-
-  const bgIconClasses = prioridadeAlta
-    ? 'p-2 bg-red-500/20 rounded-lg'
-    : prioridadeMedia
-    ? 'p-2 bg-orange-500/20 rounded-lg'
-    : 'p-2 bg-yellow-500/20 rounded-lg';
-
-  const textClasses = prioridadeAlta
-    ? 'text-sm font-bold text-red-500'
-    : prioridadeMedia
-    ? 'text-sm font-bold text-orange-500'
-    : 'text-sm font-bold text-yellow-500';
+  const iconClasses = 'h-3.5 w-3.5 text-orange-500 flex-shrink-0';
+  
+  const textClasses = 'text-xs font-semibold text-orange-500';
 
   return (
     <>
-      <Card
+      <div
         className={cardClasses}
         onClick={() => setOpenDialog(true)}
       >
-        <div className="flex items-center gap-3">
-          <div className={bgIconClasses}>
-            <AlertCircle className={iconClasses} />
-          </div>
-          <div className="flex-1">
+        <div className="flex items-start gap-2.5">
+          <AlertCircle className={`${iconClasses} mt-0.5`} />
+          <div className="flex-1 min-w-0 space-y-1">
             <h3 className={textClasses}>
               {tarefasUrgentes.length} Tarefa{tarefasUrgentes.length > 1 ? 's' : ''} Vencendo
             </h3>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground/90 line-clamp-2 leading-snug">
               {tarefasOrdenadas[0]?.titulo || 'Clique para ver detalhes'}
             </p>
           </div>
-          <X className="h-4 w-4 text-muted-foreground" />
         </div>
-      </Card>
+      </div>
 
       <Dialog open={openDialog} onOpenChange={(open) => {
         setOpenDialog(open);
