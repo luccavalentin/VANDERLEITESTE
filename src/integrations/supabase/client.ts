@@ -2,9 +2,14 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
 // Configuração do Supabase
-// Configure as variáveis de ambiente no arquivo .env.local
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "";
+// Prioridade: Variáveis de ambiente > Credenciais de produção (fallback)
+const SUPABASE_URL = 
+  import.meta.env.VITE_SUPABASE_URL || 
+  "https://tahanrdxbzaenpxcrsry.supabase.co";
+
+const SUPABASE_ANON_KEY = 
+  import.meta.env.VITE_SUPABASE_ANON_KEY || 
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhcmR4YnphZW5weGNyc3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5OTQ4OTcsImV4cCI6MjA3ODU3MDg5N30.VccKkjMG7YoDsmX6gQCicG2Tmlgkn3ieLn4McAG6fCI";
 
 // Validação das variáveis
 const usandoVariaveisAmbiente = !!(
@@ -14,44 +19,32 @@ const usandoVariaveisAmbiente = !!(
 if (!usandoVariaveisAmbiente) {
   if (import.meta.env.DEV) {
     console.warn(
-      "⚠️ Supabase não configurado.",
-      "Para conectar ao banco de dados, crie um arquivo .env.local com:",
+      "⚠️ Supabase: Usando credenciais de produção como fallback.",
+      "Para usar credenciais diferentes, crie um arquivo .env.local com:",
       "\n  VITE_SUPABASE_URL=sua_url_aqui",
-      "\n  VITE_SUPABASE_ANON_KEY=sua_chave_aqui",
-      "\n\nVeja GUIA_CONEXAO_SUPABASE.md para mais detalhes."
+      "\n  VITE_SUPABASE_ANON_KEY=sua_chave_aqui"
     );
   }
   
   if (import.meta.env.PROD) {
-    console.error(
-      "❌ ERRO: Variáveis de ambiente do Supabase não configuradas!",
-      "Configure VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no arquivo .env.local"
+    console.info(
+      "ℹ️ Supabase: Usando credenciais de produção configuradas no código.",
+      "Para usar variáveis de ambiente, configure no Vercel:",
+      "\n  VITE_SUPABASE_URL",
+      "\n  VITE_SUPABASE_ANON_KEY"
     );
   }
 }
 
-// Criar cliente apenas se as credenciais estiverem configuradas
-// Caso contrário, retornar um cliente vazio que falhará nas requisições
-export const supabase = SUPABASE_URL && SUPABASE_ANON_KEY
-  ? createClient<Database>(
-      SUPABASE_URL,
-      SUPABASE_ANON_KEY,
-      {
-        auth: {
-          storage: typeof window !== "undefined" ? window.localStorage : undefined,
-          persistSession: true,
-          autoRefreshToken: true,
-        },
-      }
-    )
-  : createClient<Database>(
-      "https://placeholder.supabase.co",
-      "placeholder-key",
-      {
-        auth: {
-          storage: typeof window !== "undefined" ? window.localStorage : undefined,
-          persistSession: false,
-          autoRefreshToken: false,
-        },
-      }
-    );
+// Criar cliente Supabase
+export const supabase = createClient<Database>(
+  SUPABASE_URL,
+  SUPABASE_ANON_KEY,
+  {
+    auth: {
+      storage: typeof window !== "undefined" ? window.localStorage : undefined,
+      persistSession: true,
+      autoRefreshToken: true,
+    },
+  }
+);
