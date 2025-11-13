@@ -221,7 +221,7 @@ export default function Investimentos() {
       prazo_dias: investimento.prazo_dias ? String(investimento.prazo_dias) : "",
       data_aplicacao: investimento.data_aplicacao,
       data_vencimento: investimento.data_vencimento || "",
-      status: investimento.status,
+      status: (investimento.status || 'ativo') as 'ativo' | 'resgatado' | 'vencido',
       vincular_fluxo_caixa: investimento.vincular_fluxo_caixa || false,
       observacoes: investimento.observacoes || "",
     });

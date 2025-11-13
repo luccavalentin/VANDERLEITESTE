@@ -466,7 +466,7 @@ export default function Relatorios() {
                   <SelectContent>
                     <SelectItem value="todos">Todos os status</SelectItem>
                     {valoresStatus.map(status => (
-                      <SelectItem key={status} value={status}>
+                      <SelectItem key={String(status)} value={String(status)}>
                         {String(status).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}
@@ -489,7 +489,7 @@ export default function Relatorios() {
                   <SelectContent>
                     <SelectItem value="todos">Todos os tipos</SelectItem>
                     {valoresTipo.map(tipo => (
-                      <SelectItem key={tipo} value={tipo}>
+                      <SelectItem key={String(tipo)} value={String(tipo)}>
                         {String(tipo).replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                       </SelectItem>
                     ))}

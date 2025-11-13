@@ -148,7 +148,7 @@ export default function ImoveisLocacao() {
             valor: data.valor_aluguel,
             data: format(dataVencimento, 'yyyy-MM-dd'),
             status: 'previsto',
-            contrato_locacao_id: contrato.id,
+            contrato_locacao_id: (contrato as any).id,
           };
         });
 
