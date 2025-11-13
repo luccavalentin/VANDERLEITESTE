@@ -1,0 +1,22 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="32" height="32" rx="6" fill="url(#gradient)"/>
+  <!-- Símbolo da Justiça (Balança) - Centralizado -->
+  <g transform="translate(16, 16)">
+    <!-- Base da balança -->
+    <line x1="0" y1="8" x2="0" y2="10" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Braço da balança -->
+    <line x1="-6" y1="8" x2="6" y2="8" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Prato esquerdo -->
+    <ellipse cx="-6" cy="6" rx="3" ry="0.8" stroke="white" stroke-width="1.5" fill="none"/>
+    <line x1="-9" y1="6" x2="-3" y2="6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Prato direito -->
+    <ellipse cx="6" cy="6" rx="3" ry="0.8" stroke="white" stroke-width="1.5" fill="none"/>
+    <line x1="3" y1="6" x2="9" y2="6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+  </g>
+  <defs>
+    <linearGradient id="gradient" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#10B981"/>
+    </linearGradient>
+  </defs>
+</svg>
