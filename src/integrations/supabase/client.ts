@@ -9,7 +9,7 @@ const SUPABASE_URL =
 
 const SUPABASE_ANON_KEY = 
   import.meta.env.VITE_SUPABASE_ANON_KEY || 
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFhcmR4YnphZW5weGNyc3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5OTQ4OTcsImV4cCI6MjA3ODU3MDg5N30.VccKkjMG7YoDsmX6gQCicG2Tmlgkn3ieLn4McAG6fCI";
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRhaGFucmR4YnphZW5weGNyc3J5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI5OTQ4OTcsImV4cCI6MjA3ODU3MDg5N30.VccKkjMG7YoDsmX6gQCicG2Tmlgkn3ieLn4McAG6fCI";
 
 // Validação das variáveis
 const usandoVariaveisAmbiente = !!(
