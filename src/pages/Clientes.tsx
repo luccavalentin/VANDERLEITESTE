@@ -74,15 +74,26 @@ export default function Clientes() {
   const { data: clientes, isLoading, error: queryError } = useQuery({
     queryKey: ["clientes"],
     queryFn: async () => {
+      // Verificar se Supabase está configurado
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://tahanrdxbzaenpxcrsry.supabase.co";
+      if (supabaseUrl.includes("placeholder")) {
+        throw new Error("Supabase não configurado. Verifique as variáveis de ambiente.");
+      }
+      
       const { data, error } = await supabase.from("clientes").select("*").order("nome", { ascending: true })
       if (error) {
         console.error("Erro ao buscar clientes:", error)
-        throw error
+        // Melhorar mensagem de erro para RLS
+        if (error.message?.includes("row-level security") || error.message?.includes("RLS")) {
+          throw new Error(`Políticas RLS não configuradas. Execute VERIFICAR_RLS_POLICIES.sql no Supabase. Erro: ${error.message}`)
+        }
+        throw new Error(`Erro ao conectar ao banco: ${error.message || "Erro desconhecido"}`)
       }
-      console.log("Clientes carregados:", data?.length || 0)
-      return data as Cliente[]
+      console.log("✅ Clientes carregados:", data?.length || 0)
+      return (data || []) as Cliente[]
     },
     retry: 1,
+    staleTime: 2 * 60 * 1000, // Cache por 2 minutos
   })
 
   const createMutation = useMutation({
@@ -469,17 +480,21 @@ export default function Clientes() {
               </TableRow>
             ) : queryError ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-red-500">
-                  <div className="space-y-2">
-                    <p>Erro ao carregar clientes</p>
-                    <p className="text-sm text-muted-foreground">
+                <TableCell colSpan={7} className="text-center text-red-500 py-8">
+                  <div className="space-y-3 max-w-2xl mx-auto">
+                    <p className="text-lg font-semibold">❌ Erro ao carregar clientes</p>
+                    <p className="text-sm text-muted-foreground bg-red-50 dark:bg-red-950/20 p-3 rounded">
                       {queryError instanceof Error ? queryError.message : "Erro desconhecido"}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      Verifique o console do navegador (F12) para mais detalhes.
-                      <br />
-                      Possível causa: Políticas RLS não configuradas. Execute o script VERIFICAR_RLS_POLICIES.sql no Supabase.
-                    </p>
+                    <div className="text-xs text-muted-foreground space-y-1 bg-muted/50 p-4 rounded">
+                      <p><strong>Possíveis soluções:</strong></p>
+                      <ol className="list-decimal list-inside space-y-1 ml-2">
+                        <li>Execute o script <code className="bg-background px-1 rounded">VERIFICAR_RLS_POLICIES.sql</code> no Supabase SQL Editor</li>
+                        <li>Verifique se as políticas RLS estão habilitadas na tabela <code className="bg-background px-1 rounded">clientes</code></li>
+                        <li>Limpe o cache do navegador (Ctrl + Shift + R)</li>
+                        <li>Verifique o console do navegador (F12) para mais detalhes</li>
+                      </ol>
+                    </div>
                   </div>
                 </TableCell>
               </TableRow>
