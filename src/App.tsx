@@ -11,11 +11,11 @@ import { TarefasAlerta } from "@/components/TarefasAlerta";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 5 * 60 * 1000,
+      staleTime: 2 * 60 * 1000, // Reduzido para 2 minutos
       gcTime: 10 * 60 * 1000,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true, // Habilitado para atualizar ao focar
       retry: 1,
-      refetchOnMount: false,
+      refetchOnMount: true, // Habilitado para atualizar ao montar
     },
   },
 });

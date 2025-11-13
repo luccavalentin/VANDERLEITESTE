@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useTheme } from "next-themes";
 import { 
@@ -24,6 +24,7 @@ import {
   BarChart3,
   FileSpreadsheet,
   PieChart as PieChartIcon,
+  RefreshCw,
 } from "lucide-react";
 import { format, startOfMonth, endOfMonth, subMonths, parse } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -35,6 +36,7 @@ import {
 
 export default function Dashboard() {
   const { theme } = useTheme();
+  const queryClient = useQueryClient();
   const isDark = theme === 'dark';
   const [dialogAberto, setDialogAberto] = useState<string | null>(null);
   const [detalhesDados, setDetalhesDados] = useState<any>(null);
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const [openComparativo, setOpenComparativo] = useState(false);
   const [mesComparativo1, setMesComparativo1] = useState<string>(format(subMonths(new Date(), 1), 'yyyy-MM'));
   const [mesComparativo2, setMesComparativo2] = useState<string>(format(new Date(), 'yyyy-MM'));
+  const [atualizando, setAtualizando] = useState(false);
   
   // Cores dos gráficos baseadas no tema
   const chartColors = useMemo(() => {
@@ -329,6 +332,21 @@ export default function Dashboard() {
     setOpenComparativo(true);
   };
 
+  const handleAtualizarDados = async () => {
+    setAtualizando(true);
+    try {
+      // Invalidar todas as queries para forçar refetch
+      await queryClient.invalidateQueries();
+      // Forçar refetch de todas as queries ativas
+      await queryClient.refetchQueries();
+      // Toast de sucesso será mostrado automaticamente quando os dados carregarem
+    } catch (error) {
+      console.error('Erro ao atualizar dados:', error);
+    } finally {
+      setAtualizando(false);
+    }
+  };
+
   const aplicarComparativo = () => {
     setMesSelecionado(mesComparativo2);
     setOpenComparativo(false);
@@ -470,6 +488,16 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">Dashboard</h1>
         <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+          <Button 
+            variant="outline" 
+            onClick={handleAtualizarDados} 
+            disabled={atualizando}
+            className="flex-1 sm:flex-initial"
+            title="Atualizar todos os dados do sistema"
+          >
+            <RefreshCw className={`h-4 w-4 mr-2 ${atualizando ? 'animate-spin' : ''}`} />
+            {atualizando ? 'Atualizando...' : 'Atualizar Dados'}
+          </Button>
           <Button variant="outline" onClick={handleComparativo} className="flex-1 sm:flex-initial">
             <GitCompare className="h-4 w-4 mr-2" />
             Comparativo
